@@ -1,3 +1,7 @@
+# Ignore all __pycache__ folders recursively
+**/__pycache__/
+# Ignore YouTube API debug output
+youtube_api_response.json
 chat.log
 test.log
 # Ignore Python bytecode cache folders
