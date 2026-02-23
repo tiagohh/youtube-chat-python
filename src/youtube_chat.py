@@ -84,7 +84,7 @@ class YouTubeChat:
                     liveChatId=self.live_chat_id,
                     part='snippet,authorDetails'
                 ).execute()
-                print(f"[DEBUG] liveChatMessages API response (attempt {attempt+1}):", response)
+                # print(f"[DEBUG] liveChatMessages API response (attempt {attempt+1}):", response)
                 return response.get('items', [])
             except Exception as exc:
                 print(f"[EXCEPTION] Exception in get_live_chat_messages (attempt {attempt+1}): {exc}")
@@ -98,7 +98,7 @@ class YouTubeChat:
 
     def start_chat_session(self):
         """Poll the YouTube API forever, forwarding each message to the handler."""
-        print("Starting YouTube chat session...")
+        print("Starting YouTube chat session...")  # User-facing info, keep this
         while True:
             try:
                 messages = self.get_live_chat_messages()
@@ -131,10 +131,10 @@ if __name__ == "__main__":
     VIDEO_ID = os.getenv('YOUTUBE_VIDEO_ID')
     CACHE_FILE = os.getenv('CHAT_ID_CACHE_FILE', "chat_id.cache")
 
-    print(f"[DEBUG] Initial API_KEY: {API_KEY}")
-    print(f"[DEBUG] Initial LIVE_CHAT_ID: {LIVE_CHAT_ID}")
-    print(f"[DEBUG] Initial VIDEO_ID: {VIDEO_ID}")
-    print(f"[DEBUG] CACHE_FILE: {CACHE_FILE}")
+    # print(f"[DEBUG] Initial API_KEY: {API_KEY}")
+    # print(f"[DEBUG] Initial LIVE_CHAT_ID: {LIVE_CHAT_ID}")
+    # print(f"[DEBUG] Initial VIDEO_ID: {VIDEO_ID}")
+    # print(f"[DEBUG] CACHE_FILE: {CACHE_FILE}")
 
     # helper that strips a full youtube link down to the raw ID
     import re
@@ -155,12 +155,12 @@ if __name__ == "__main__":
         api, vid = ui.prompt_credentials()
         API_KEY = API_KEY or api
         VIDEO_ID = VIDEO_ID or vid
-        print(f"[DEBUG] User provided API_KEY: {API_KEY}")
-        print(f"[DEBUG] User provided VIDEO_ID: {VIDEO_ID}")
+        # print(f"[DEBUG] User provided API_KEY: {API_KEY}")
+        # print(f"[DEBUG] User provided VIDEO_ID: {VIDEO_ID}")
 
     # normalize video input (may be full URL)
     VIDEO_ID = normalize_video_id(VIDEO_ID)
-    print(f"[DEBUG] Normalized VIDEO_ID: {VIDEO_ID}")
+    # print(f"[DEBUG] Normalized VIDEO_ID: {VIDEO_ID}")
 
     if not API_KEY or (not LIVE_CHAT_ID and not VIDEO_ID):
         error_msg = "API key and either Live Chat ID (via env) or Video ID must be provided."
@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
 
             yt_client = YouTubeClient(API_KEY)
-            print(f"[DEBUG] Creating YouTubeChat with API_KEY: {API_KEY}, LIVE_CHAT_ID: {LIVE_CHAT_ID}, VIDEO_ID: {VIDEO_ID}, CACHE_FILE: {CACHE_FILE}")
+            # print(f"[DEBUG] Creating YouTubeChat with API_KEY: {API_KEY}, LIVE_CHAT_ID: {LIVE_CHAT_ID}, VIDEO_ID: {VIDEO_ID}, CACHE_FILE: {CACHE_FILE}")
             # create a new, timestamped CSV for this run so logs are versioned
             handler = create_handler(yt_client, ui=ui, versioned=True)
             chat = YouTubeChat(
@@ -191,7 +191,7 @@ if __name__ == "__main__":
                 cache_file=CACHE_FILE,
                 handler=handler,
             )
-            print(f"[DEBUG] YouTubeChat created. live_chat_id: {getattr(chat, 'live_chat_id', None)}")
+            # print(f"[DEBUG] YouTubeChat created. live_chat_id: {getattr(chat, 'live_chat_id', None)}")
 
             import threading
             def run_poll():

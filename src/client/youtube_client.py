@@ -22,13 +22,13 @@ class YouTubeClient:
             import json
             with open("youtube_api_response.json", "w", encoding="utf-8") as f:
                 json.dump(response, f, ensure_ascii=False, indent=2)
-            print("[DEBUG] YouTube API response for liveStreamingDetails written to youtube_api_response.json")
+            # print("[DEBUG] YouTube API response for liveStreamingDetails written to youtube_api_response.json")
             items = response.get('items', [])
             if not items:
                 print(f"[ERROR] No video found with ID '{video_id}'. Please check the video ID and try again.")
                 raise ValueError(f"No video found with ID '{video_id}'. Please check the video ID and try again.")
             live_details = items[0].get('liveStreamingDetails', {})
-            print("[DEBUG] liveStreamingDetails:", live_details)
+            # print("[DEBUG] liveStreamingDetails:", live_details)
             live_chat_id = live_details.get('activeLiveChatId')
             if not live_chat_id:
                 # Provide a clear error if the video is not live or chat is unavailable
