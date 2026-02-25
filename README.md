@@ -91,23 +91,6 @@ prefer; the GUI will only prompt when values are missing.
 > 💡 To bypass the GUI completely (e.g. for automated logging) simply
 > instantiate `ChatHandler` without a `ui` object and call
 > `chat.start_chat_session()` from your own script.
-## Creating a Release
-
-After merging changes into `main`, follow these steps to publish a new version with a Windows executable attached automatically:
-
-1. **Tag the commit** with a version number (prefix `v` or `V`):
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-
-2. **That's it.** Pushing the tag triggers the *Build Windows Executable* GitHub Actions workflow, which:
-   - Builds `YouTubeChatLogger.exe` using PyInstaller on a Windows runner.
-   - Creates a GitHub Release for the tag (if one doesn't exist yet) and attaches the `.exe` as a release asset.
-
-3. **Check the result** on the [Releases page](https://github.com/tiagohh/youtube-chat-python/releases) — the new release should appear with `YouTubeChatLogger.exe` available for download within a few minutes.
-
-> 💡 You can also go to **Actions → Build Windows Executable → Run workflow** to trigger a manual build at any time without pushing a tag (the exe will be saved as a workflow artifact instead of a release asset in that case).
 
 ## Contributing
 
