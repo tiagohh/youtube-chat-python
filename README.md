@@ -24,6 +24,11 @@ youtube-chat-python
 └── README.md                     # Project documentation
 ```
 
+## Download
+
+A pre-built Windows executable is available on the [Releases page](https://github.com/tiagohh/youtube-chat-python/releases).
+Download `YouTubeChatLogger.exe` from the latest release — no Python installation required.
+
 ## Setup Instructions
 
 1. Clone the repository:
