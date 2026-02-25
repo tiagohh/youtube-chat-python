@@ -148,10 +148,17 @@ if __name__ == "__main__":
         return val
 
     # start UI for optional prompting and display
-    from src.ui.chat_ui import ChatUI
-    ui = ChatUI()
+    try:
+        from src.ui.chat_ui import ChatUI
+        ui = ChatUI()
+    except Exception:
+        ui = None
 
     if not API_KEY or (not LIVE_CHAT_ID and not VIDEO_ID):
+        if ui is None:
+            # tkinter not available and no credentials; exit gracefully
+            print("No credentials provided and no UI available.")
+            sys.exit(0)
         api, vid = ui.prompt_credentials()
         API_KEY = API_KEY or api
         VIDEO_ID = VIDEO_ID or vid
