@@ -39,6 +39,14 @@ def create_handler(youtube_client, ui=None, log_file="chat.log",
             else:
                 csv_path = os.path.join(csv_dir, "chat.csv")
 
+    print(
+        f"\nFiles will be saved to:\n"
+        f"  Log : {log_file}\n"
+        f"  CSV : {csv_path}\n"
+        f"  DB  : {db_path}\n"
+        f"  XLSX: {xlsx_path}\n"
+    )
+
     prev = os.environ.get('CHAT_CSV_DELIMITER')
     try:
         if versioned and os.name == 'nt' and prev is None:
