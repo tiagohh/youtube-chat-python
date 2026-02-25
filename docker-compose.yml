@@ -1,0 +1,9 @@
+services:
+  youtube-chat:
+    build: .
+    env_file:
+      - .env
+    environment:
+      - DISPLAY=:99
+    volumes:
+      - ./Logs:/app/Logs
