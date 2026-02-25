@@ -92,43 +92,6 @@ prefer; the GUI will only prompt when values are missing.
 > instantiate `ChatHandler` without a `ui` object and call
 > `chat.start_chat_session()` from your own script.
 
-## Docker
-
-You can run the YouTube chat logger (and Firefox) inside a Docker container using the provided `Dockerfile` and `docker-compose.yml`.
-
-### Prerequisites
-
-* [Docker](https://docs.docker.com/get-docker/) installed
-* A `.env` file with your credentials (copy `.env.example` → `.env` and fill in the values)
-
-### Build and run
-
-```bash
-docker compose up --build
-```
-
-This will:
-1. Build the image with Python 3.11, Firefox ESR, and Xvfb (virtual display).
-2. Start a virtual framebuffer (`Xvfb`) on display `:99`.
-3. Launch Firefox in the background on that display.
-4. Start the YouTube chat logger, which reads credentials from the environment variables in your `.env` file.
-
-Chat logs are written to the `Logs/` folder on the host machine via the mounted volume.
-
-> **Tip:** When running in a container it is recommended to supply credentials via environment variables (`YOUTUBE_API_KEY` and `YOUTUBE_VIDEO_ID` / `YOUTUBE_LIVE_CHAT_ID`) instead of the GUI prompt. Set them in your `.env` file before starting the container.
-
-### Build only
-
-```bash
-docker build -t youtube-chat-python .
-```
-
-### Run manually
-
-```bash
-docker run --rm --env-file .env -v "$(pwd)/Logs:/app/Logs" youtube-chat-python
-```
-
 ## Contributing
 
 Feel free to submit issues or pull requests for improvements or bug fixes.
