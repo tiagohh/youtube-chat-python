@@ -92,6 +92,94 @@ prefer; the GUI will only prompt when values are missing.
 > instantiate `ChatHandler` without a `ui` object and call
 > `chat.start_chat_session()` from your own script.
 
+## Docker (remote Firefox + automatic chat logging)
+
+Run Firefox inside a Docker container and access it remotely from **any
+browser** — including mobile — using the built-in noVNC web interface.
+The chat scraper monitors YouTube live chat automatically and writes
+messages to a CSV file on your host machine.
+
+### CSV format
+
+| Column   | Description                                  |
+|----------|----------------------------------------------|
+| `time`   | Timestamp when the message was captured      |
+| `name`   | Author's display name                        |
+| `message`| Message text                                 |
+| `delete?`| `yes` if the message was deleted, blank otherwise |
+
+### Prerequisites
+
+* [Docker](https://docs.docker.com/get-docker/) and
+  [Docker Compose](https://docs.docker.com/compose/) installed on the
+  machine that will run the container (does **not** need to be your
+  phone/tablet — only the container host).
+
+### Quick start
+
+```bash
+# 1. Build and start the container
+docker compose up --build
+
+# 2. Open the remote desktop in any browser (phone, tablet, PC…)
+#    http://<host-ip>:6080/vnc.html
+
+# 3. Navigate Firefox to your YouTube livestream.
+#    Chat logging starts automatically.
+```
+
+Chat messages are saved to `./Logs/chat.csv` on the host.
+
+### Providing the YouTube URL automatically
+
+Set `YOUTUBE_URL` in your `.env` file (copy `.env.example` → `.env`) and
+Firefox will open the stream on startup — no manual navigation needed:
+
+```
+YOUTUBE_URL=https://www.youtube.com/watch?v=YOUR_VIDEO_ID
+```
+
+Or pass it inline:
+
+```bash
+YOUTUBE_URL=https://www.youtube.com/watch?v=YOUR_VIDEO_ID docker compose up --build
+```
+
+### Environment variables
+
+| Variable       | Default                        | Description                        |
+|----------------|--------------------------------|------------------------------------|
+| `YOUTUBE_URL`  | `https://www.youtube.com`      | Page Firefox opens on startup      |
+| `CHAT_CSV_PATH`| `/app/Logs/chat.csv`           | CSV output path (inside container) |
+| `POLL_INTERVAL`| `2`                            | DOM poll interval in seconds       |
+
+### Manual `docker run`
+
+```bash
+docker build -t youtube-chat-python .
+docker run --rm -p 6080:6080 \
+  -e YOUTUBE_URL=https://www.youtube.com/watch?v=YOUR_VIDEO_ID \
+  -v "$(pwd)/Logs:/app/Logs" \
+  youtube-chat-python
+```
+
+---
+
+## Tampermonkey userscript (standalone, no Docker needed)
+
+If you already have Firefox (or any Chromium-based browser) on your
+device, you can install the userscript directly instead of using Docker.
+
+1. Install [Tampermonkey](https://www.tampermonkey.net/) in your browser.
+2. Open `tampermonkey/youtube_chat_logger.user.js` from this repository
+   and click **Install** when Tampermonkey asks.
+3. Navigate to any YouTube livestream — a small **🔴 Chat Logger** panel
+   will appear in the bottom-right corner.
+4. Click **⬇ Download CSV** at any time to save the log.
+
+The script captures the same four columns (`time`, `name`, `message`,
+`delete?`) and detects message deletions in real time.
+
 ## Contributing
 
 Feel free to submit issues or pull requests for improvements or bug fixes.

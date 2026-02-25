@@ -1,0 +1,15 @@
+services:
+  youtube-chat:
+    build: .
+    ports:
+      # noVNC web interface – open http://localhost:6080/vnc.html in any browser
+      - "6080:6080"
+    env_file:
+      - .env
+    environment:
+      - DISPLAY=:99
+      # Set YOUTUBE_URL to the livestream URL, or leave blank to navigate manually
+      # - YOUTUBE_URL=https://www.youtube.com/watch?v=YOUR_VIDEO_ID
+    volumes:
+      # Chat CSV and logs are written here on the host machine
+      - ./Logs:/app/Logs
