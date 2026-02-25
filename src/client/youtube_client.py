@@ -53,7 +53,7 @@ class YouTubeClient:
         if live_chat_id is None:
             return []
 
-        request = self.service.liveChat/messages().list(
+        request = self.service.liveChatMessages().list(
             liveChatId=live_chat_id, part='snippet,authorDetails'
         )
         response = request.execute()
