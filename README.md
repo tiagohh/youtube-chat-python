@@ -94,74 +94,117 @@ prefer; the GUI will only prompt when values are missing.
 
 ## Docker (remote Firefox + automatic chat logging)
 
-Run Firefox inside a Docker container and access it remotely from **any
-browser** — including mobile — using the built-in noVNC web interface.
-The chat scraper monitors YouTube live chat automatically and writes
-messages to a CSV file on your host machine.
+Run Firefox inside a Docker container and control it from **any browser or
+Android phone** via noVNC.  The chat scraper runs automatically as the
+channel owner account — capturing all messages, mod actions, bans,
+timeouts, and deleted messages — and writes everything to an **XLSX file**.
 
-### CSV format
+### XLSX output format
 
-| Column   | Description                                  |
-|----------|----------------------------------------------|
-| `time`   | Timestamp when the message was captured      |
-| `name`   | Author's display name                        |
-| `message`| Message text                                 |
-| `delete?`| `yes` if the message was deleted, blank otherwise |
+The file is saved to `./Logs/chat-YYYY-MM-DD_HH-MM-SS.xlsx` on your host
+machine and contains **three sheets**:
+
+| Sheet | Contents |
+|---|---|
+| `Chat` | Every message and moderation event |
+| `VDS` | Banned users only (mirrored from Chat) |
+| `Livestream URL` | The resolved stream URL captured at startup |
+
+All sheets share **five columns** (light blue background, bold, uppercase headers):
+
+| TIME | USER | MESSAGE | STATUS | MOD ACTION |
+|---|---|---|---|---|
+| 2026-02-25 10:30:01 | StreamFan99 | Hello everyone! | | |
+| 2026-02-25 10:31:10 | BadActor | oops | `Deleted by user` | |
+| 2026-02-25 10:32:00 | TrollUser | [offensive] | `Deleted by mod` | ModSarah |
+| 2026-02-25 10:32:30 | SpamBot | Buy followers! | `Hidden` | |
+| 2026-02-25 10:33:00 | TrollUser | again | `Timeout – 10 min` | ModJohn |
+| 2026-02-25 10:34:00 | BannedUser | final message | `Banned` | ModSarah |
+
+**STATUS values:** blank · `Deleted by user` · `Deleted by mod` · `Hidden` ·
+`Timeout – X min` · `Banned`
+
+Delayed mod actions (e.g. a message deleted 30 s after it was sent) update
+the original row in-place so there is always one row per message.
+
+### Services started by `docker compose up`
+
+| Service | Purpose | Port |
+|---|---|---|
+| `youtube-chat` | Firefox + noVNC remote desktop + chat scraper | 6080 |
+| `portainer` | Docker management UI (start/stop from Android) | 9443 |
+| `cloudflared` | Secure tunnel — access both from outside your home | set in `.env` |
 
 ### Prerequisites
 
 * [Docker](https://docs.docker.com/get-docker/) and
   [Docker Compose](https://docs.docker.com/compose/) installed on the
-  machine that will run the container (does **not** need to be your
-  phone/tablet — only the container host).
+  machine that will run the containers (your home server or PC).
+* A free [Cloudflare](https://dash.cloudflare.com) account for the tunnel
+  (optional — remove the `cloudflared` service if you only need LAN access).
 
-### Quick start
+### First-time setup (do this once)
 
 ```bash
-# 1. Build and start the container
+# 1. Clone the repository
+git clone https://github.com/tiagohh/youtube-chat-python.git
+cd youtube-chat-python
+
+# 2. Create your .env file
+cp .env.example .env
+# Edit .env and fill in:
+#   YOUTUBE_CHANNEL_URL  — your channel URL, e.g. https://www.youtube.com/@YourChannel
+#   VNC_PASSWORD         — a strong password for the remote desktop
+#   CLOUDFLARE_TUNNEL_TOKEN — from dash.cloudflare.com → Zero Trust → Tunnels
+
+# 3. Start everything
 docker compose up --build
 
-# 2. Open the remote desktop in any browser (phone, tablet, PC…)
-#    http://<host-ip>:6080/vnc.html
+# 4. Open the remote desktop in your browser
+#    http://localhost:6080/vnc.html   (local)
+#    https://your-tunnel.trycloudflare.com  (remote — see Cloudflare dashboard)
 
-# 3. Navigate Firefox to your YouTube livestream.
-#    Chat logging starts automatically.
+# 5. Log in to Google as the channel owner (only needed once)
+#    Firefox saves the login to ./firefox-profile — it survives container restarts.
 ```
 
-Chat messages are saved to `./Logs/chat.csv` on the host.
-
-### Providing the YouTube URL automatically
-
-Set `YOUTUBE_URL` in your `.env` file (copy `.env.example` → `.env`) and
-Firefox will open the stream on startup — no manual navigation needed:
-
-```
-YOUTUBE_URL=https://www.youtube.com/watch?v=YOUR_VIDEO_ID
-```
-
-Or pass it inline:
+### Every time after that
 
 ```bash
-YOUTUBE_URL=https://www.youtube.com/watch?v=YOUR_VIDEO_ID docker compose up --build
+docker compose up
 ```
 
-### Environment variables
+Firefox opens already logged in, navigates to `YOUTUBE_CHANNEL_URL/live`,
+and starts logging automatically.  The XLSX file appears in `./Logs/`.
 
-| Variable       | Default                        | Description                        |
-|----------------|--------------------------------|------------------------------------|
-| `YOUTUBE_URL`  | `https://www.youtube.com`      | Page Firefox opens on startup      |
-| `CHAT_CSV_PATH`| `/app/Logs/chat.csv`           | CSV output path (inside container) |
-| `POLL_INTERVAL`| `2`                            | DOM poll interval in seconds       |
+### Remote management from Android
 
-### Manual `docker run`
+1. Open `https://localhost:9443` (or the Cloudflare tunnel URL) in your
+   Android browser.
+2. Log in to Portainer (set your admin password on first visit).
+3. Tap **Start** on the `youtube-chat` container to begin a session.
+4. Open the noVNC URL to watch Firefox in real time.
 
-```bash
-docker build -t youtube-chat-python .
-docker run --rm -p 6080:6080 \
-  -e YOUTUBE_URL=https://www.youtube.com/watch?v=YOUR_VIDEO_ID \
-  -v "$(pwd)/Logs:/app/Logs" \
-  youtube-chat-python
-```
+### Environment variables (`.env`)
+
+| Variable | Default | Description |
+|---|---|---|
+| `YOUTUBE_CHANNEL_URL` | `https://www.youtube.com/@YourChannel` | Channel URL; the scraper appends `/live` to find the active stream |
+| `VNC_PASSWORD` | `changeme` | Password for the noVNC remote desktop |
+| `CLOUDFLARE_TUNNEL_TOKEN` | — | Tunnel token from Cloudflare dashboard |
+| `POLL_INTERVAL` | `2` | Seconds between DOM reads |
+| `RETRY_INTERVAL` | `60` | Seconds to wait before retrying if no stream is live |
+
+### Security notes
+
+* The VNC password is set in `.env` — use a strong, unique value.
+* The Firefox profile (`./firefox-profile/`) contains your Google login
+  cookies.  It is excluded from Git by `.gitignore` — never commit it.
+* Portainer mounts the Docker socket (`/var/run/docker.sock`).  Keep
+  Portainer behind the Cloudflare Tunnel (not directly exposed to the
+  internet) and set a strong admin password.
+* The Cloudflare Tunnel handles HTTPS encryption — no router ports need
+  to be opened.
 
 ---
 
@@ -173,12 +216,18 @@ device, you can install the userscript directly instead of using Docker.
 1. Install [Tampermonkey](https://www.tampermonkey.net/) in your browser.
 2. Open `tampermonkey/youtube_chat_logger.user.js` from this repository
    and click **Install** when Tampermonkey asks.
-3. Navigate to any YouTube livestream — a small **🔴 Chat Logger** panel
-   will appear in the bottom-right corner.
-4. Click **⬇ Download CSV** at any time to save the log.
+3. Navigate to any YouTube livestream — a **🔴 Chat Logger** panel appears
+   in the bottom-right corner.
+4. Click **⬇ Download XLSX** at any time to save the log.
 
-The script captures the same four columns (`time`, `name`, `message`,
-`delete?`) and detects message deletions in real time.
+The script captures the same five columns (`TIME`, `USER`, `MESSAGE`,
+`STATUS`, `MOD ACTION`) across three sheets (`Chat`, `VDS`,
+`Livestream URL`).  Delayed mod actions update the original row in-place,
+so there is always one row per message regardless of when the action occurs.
+
+> **Note:** The XLSX generated by the browser script does not have the
+> light-blue styled headers (browser XLSX libraries do not easily support
+> cell styling).  The Docker/Python version produces fully styled output.
 
 ## Contributing
 

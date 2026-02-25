@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
 # Install Firefox ESR, virtual display, VNC server, noVNC web client,
-# geckodriver, and websockify (the WebSocket proxy for noVNC).
+# geckodriver, and websockify (the WebSocket-to-TCP proxy for noVNC).
 RUN apt-get update && apt-get install -y --no-install-recommends \
     firefox-esr \
     firefox-geckodriver \
@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install Python dependencies (selenium only for the scraper)
 COPY requirements-docker.txt .
 RUN pip install --no-cache-dir -r requirements-docker.txt
 
@@ -21,20 +20,28 @@ COPY . .
 
 RUN chmod +x /app/entrypoint.sh
 
-# Virtual display that Firefox and noVNC will share
+# ── Environment variables (override in .env or docker-compose.yml) ───────────
+
+# Virtual display used by Xvfb, Firefox, and x11vnc
 ENV DISPLAY=:99
 
-# YouTube URL to open on startup. Leave blank to start on the YouTube
-# homepage and navigate manually via noVNC.
-ENV YOUTUBE_URL=https://www.youtube.com
+# YouTube channel URL.  The scraper appends /live to find the current stream.
+ENV YOUTUBE_CHANNEL_URL=https://www.youtube.com
 
-# Path for the chat CSV inside the container (volume-mounted below)
-ENV CHAT_CSV_PATH=/app/Logs/chat.csv
+# Directory inside the container where the XLSX file is written.
+# This path is volume-mounted to ./Logs on the host.
+ENV LOGS_DIR=/app/Logs
 
-# Seconds between DOM polls
+# Seconds between DOM polls (lower = more real-time, higher = less CPU)
 ENV POLL_INTERVAL=2
 
-# noVNC web interface
+# Seconds to wait before retrying when no livestream is found
+ENV RETRY_INTERVAL=60
+
+# VNC password for noVNC remote access (set a strong value in .env)
+ENV VNC_PASSWORD=changeme
+
+# noVNC web interface port
 EXPOSE 6080
 
 ENTRYPOINT ["/app/entrypoint.sh"]

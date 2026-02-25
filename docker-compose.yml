@@ -1,15 +1,53 @@
 services:
+
+  # ── Main container: Firefox + noVNC remote desktop + chat scraper ─────────
   youtube-chat:
     build: .
     ports:
-      # noVNC web interface – open http://localhost:6080/vnc.html in any browser
+      # noVNC web interface — open http://localhost:6080/vnc.html in any browser
       - "6080:6080"
     env_file:
       - .env
     environment:
       - DISPLAY=:99
-      # Set YOUTUBE_URL to the livestream URL, or leave blank to navigate manually
-      # - YOUTUBE_URL=https://www.youtube.com/watch?v=YOUR_VIDEO_ID
     volumes:
-      # Chat CSV and logs are written here on the host machine
+      # XLSX logs written here on the host machine
       - ./Logs:/app/Logs
+      # Persistent Firefox profile — Google login is saved here across restarts
+      - ./firefox-profile:/app/firefox-profile
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+    restart: unless-stopped
+
+  # ── Portainer: Docker management UI (start/stop from Android browser) ─────
+  # Access: https://localhost:9443
+  # ⚠️  Portainer requires the Docker socket — keep this service on a trusted
+  #     network and set a strong admin password on first login.
+  portainer:
+    image: portainer/portainer-ce:latest
+    ports:
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  # ── Cloudflare Tunnel: secure remote access without opening router ports ──
+  # Set CLOUDFLARE_TUNNEL_TOKEN in .env (free at dash.cloudflare.com → Tunnels)
+  # Remove this service if you only need local network access.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
+    restart: on-failure
+
+volumes:
+  portainer_data:

@@ -227,3 +227,7 @@ Logs/*/*
 
 # Ignore chat_id.cache
 chat_id.cache
+
+# Firefox profile contains Google login cookies — never commit
+firefox-profile/
+
