@@ -1,7 +1,20 @@
 from googleapiclient.discovery import build
 import os
+import sys
 import time
 import googleapiclient.errors
+
+
+def _get_base_dir():
+    """Return the base directory for saving output files.
+
+    When running as a PyInstaller frozen executable, returns the directory
+    containing the .exe so that log files are saved next to it instead of
+    inside a temporary extraction folder.  Otherwise returns the project root.
+    """
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # helper to construct a ChatHandler with sane defaults.  moved here so
 # tests can import it and so that the main script uses the same logic.
@@ -14,7 +27,7 @@ def create_handler(youtube_client, ui=None, log_file="chat.log",
     # Environment variable takes precedence
     env_csv = os.getenv("CHAT_CSV_FILE")
     timestamp = time.strftime('%Y%m%d_%H%M%S')
-    logs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'Logs')
+    logs_dir = os.path.join(_get_base_dir(), 'Logs')
     txt_dir = os.path.join(logs_dir, 'TXT')
     db_dir = os.path.join(logs_dir, 'ChatDatabase')
     csv_dir = os.path.join(logs_dir, 'Chat Principal CSV')
